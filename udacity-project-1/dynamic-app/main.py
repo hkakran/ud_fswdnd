@@ -16,8 +16,12 @@
 #
 import webapp2
 import jinja2
-import entertainment_center
 import os
+import sys
+import re
+lib_folder = os.path.abspath('lib')
+sys.path.append(lib_folder)
+import entertainment_center
 
 template_directory=os.path.join(os.path.dirname("__file__"),'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_directory))
@@ -36,6 +40,29 @@ entertainmentCenter.addMovie(
     poster="http://www.gstatic.com/tv/thumb/movieposters/35032/p35032_p_v8_aa.jpg",
     trailer="https://www.youtube.com/watch?v=fwHlyurv-0U")
 
+
+def render_movie(movie):
+    """
+    Renders the movie properties via the movie.html template
+    """
+    # Extract the youtube ID from the url
+    youtube_id_match = re.search(
+        r'(?<=v=)[^&#]+', movie.trailer_url)
+    youtube_id_match = youtube_id_match or re.search(
+        r'(?<=be/)[^&#]+', movie.trailer_url)
+    trailer_youtube_id = (youtube_id_match.group(0) if youtube_id_match
+                          else None)
+
+    # Append the tile for the movie with its content filled in
+    t = jinja_env.get_template('movie.html')
+    print t
+    return t.render({
+        "movie_title":movie.title,
+        "poster_image_url":movie.poster_url,
+        "trailer_youtube_id":trailer_youtube_id,
+        "storyline": movie.storyline
+    })
+
 class MainHandler(webapp2.RequestHandler):
     def render_template_string(self, template, **params):
         t = jinja_env.get_template(template)
@@ -45,8 +72,10 @@ class MainHandler(webapp2.RequestHandler):
         self.response.out.write(self.render_template_string(template, **kw))
 
     def get(self):
+
+        print [ render_movie(movie) for movie in entertainmentCenter.getMovies() ]
         self.render("index.html", {
-            "movie_tiles": entertainmentCenter.render(),
+            "movie_tiles": "".join([ render_movie(movie) for movie in entertainmentCenter.getMovies() ]),
             "prev_items": entertainmentCenter.toString()
         })
 
@@ -71,8 +100,9 @@ class MainHandler(webapp2.RequestHandler):
                 trailer=self.request.get('trailer')
             )
 
+
         self.render("index.html", {
-            "movie_tiles": entertainmentCenter.render(),
+            "movie_tiles": "".join([ render_movie(movie) for movie in entertainmentCenter.getMovies() ]),
             "prev_items": entertainmentCenter.toString()
         })
 

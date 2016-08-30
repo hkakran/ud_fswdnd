@@ -27,6 +27,9 @@ class EntertainmentCenter:
         else:
             self.items = list()
 
+    def getMovies(self):
+        return self.items
+
     def addMovie(self, title, storyline, poster, trailer):
         """
         Adds a movie to this entertainment center
@@ -45,12 +48,5 @@ class EntertainmentCenter:
         content = ''
         for item in self.items:
             content += "||"+item.toString()
-
-        return content
-
-    def render(self):
-        content = ''
-        for item in self.items:
-            content += item.render()
 
         return content
